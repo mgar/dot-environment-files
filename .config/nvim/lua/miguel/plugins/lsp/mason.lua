@@ -49,6 +49,7 @@ return {
 				"hclfmt", -- terraform formatter
 				"pylint", -- python linter
 				"eslint_d", -- js linter
+				"tflint", -- terraform linter
 			},
 		})
 	end,
