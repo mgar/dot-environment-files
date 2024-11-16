@@ -45,6 +45,8 @@ return {
         "vimdoc",
         "c",
         "terraform",
+        "python",
+        "groovy",
       },
       incremental_selection = {
         enable = true,
