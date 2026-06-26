@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neovim Cheatsheet &middot; miguel's config</title>
+  <style>
+    /* ---- Catppuccin Frappé palette (matches your colorscheme) ---- */
+    :root {
+      --base: #303446;
+      --mantle: #292c3c;
+      --crust: #232634;
+      --surface0: #414559;
+      --surface1: #51576d;
+      --surface2: #626880;
+      --overlay0: #737994;
+      --text: #c6d0f5;
+      --subtext1: #b5bfe2;
+      --subtext0: #a5adce;
+      --blue: #8caaee;
+      --lavender: #babbf1;
+      --sapphire: #85c1dc;
+      --sky: #99d1db;
+      --teal: #81c8be;
+      --green: #a6d189;
+      --yellow: #e5c890;
+      --peach: #ef9f76;
+      --maroon: #ea999c;
+      --red: #e78284;
+      --mauve: #ca9ee6;
+      --pink: #f4b8e4;
+      --flamingo: #eebebe;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(140,170,238,0.12), transparent 60%),
+        radial-gradient(1000px 500px at 110% 10%, rgba(202,158,230,0.12), transparent 55%),
+        var(--base);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    code, kbd { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    /* ---- Header ---- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(41,44,60,0.92), rgba(41,44,60,0.78));
+      border-bottom: 1px solid var(--surface0);
+    }
+    .header-inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 1.1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.85rem; }
+    .logo {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      color: var(--crust);
+      font-weight: 800;
+      font-size: 1.4rem;
+      box-shadow: 0 6px 18px rgba(166,209,137,0.25);
+    }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand p { font-size: 0.82rem; color: var(--subtext0); }
+
+    .leader-pill {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.85rem; color: var(--subtext1);
+      background: var(--surface0);
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--surface1);
+    }
+
+    .search-wrap { position: relative; flex: 1 1 260px; min-width: 220px; max-width: 420px; }
+    .search-wrap svg { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--overlay0); }
+    #search {
+      width: 100%;
+      padding: 0.6rem 0.9rem 0.6rem 2.4rem;
+      background: var(--crust);
+      border: 1px solid var(--surface1);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #search:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(140,170,238,0.18); }
+    #search::placeholder { color: var(--overlay0); }
+
+    /* ---- Layout ---- */
+    main { max-width: 1300px; margin: 0 auto; padding: 1.75rem 1.5rem 0; }
+
+    .intro {
+      background: linear-gradient(135deg, rgba(140,170,238,0.10), rgba(202,158,230,0.08));
+      border: 1px solid var(--surface0);
+      border-radius: 16px;
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 1.75rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1.1rem;
+    }
+    .intro h2 { grid-column: 1 / -1; font-size: 1.05rem; color: var(--lavender); display:flex; align-items:center; gap:0.5rem; }
+    .step { display: flex; gap: 0.75rem; align-items: flex-start; }
+    .step .num {
+      flex: none;
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      display: grid; place-items: center;
+      background: var(--surface0);
+      color: var(--sky);
+      font-weight: 700; font-size: 0.8rem;
+      border: 1px solid var(--surface1);
+    }
+    .step p { font-size: 0.88rem; color: var(--subtext1); }
+    .step strong { color: var(--text); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 1.1rem;
+      align-items: start;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--mantle), rgba(41,44,60,0.6));
+      border: 1px solid var(--surface0);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover { transform: translateY(-3px); border-color: var(--surface2); box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+
+    .card-head {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--surface0);
+    }
+    .card-head .icon {
+      width: 34px; height: 34px; flex: none;
+      border-radius: 9px;
+      display: grid; place-items: center;
+      background: var(--surface0);
+    }
+    .card-head h3 { font-size: 0.98rem; font-weight: 650; }
+    .card-head .count { margin-left: auto; font-size: 0.72rem; color: var(--overlay0); background: var(--crust); padding: 0.15rem 0.5rem; border-radius: 999px; }
+
+    .rows { padding: 0.4rem 0.6rem 0.7rem; }
+    .row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 0.55rem;
+      border-radius: 8px;
+      transition: background 0.12s;
+    }
+    .row:hover { background: var(--surface0); }
+    .row .desc { font-size: 0.87rem; color: var(--subtext1); flex: 1; }
+    .keys { display: flex; gap: 0.25rem; align-items: center; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+    .keys .plus { color: var(--overlay0); font-size: 0.7rem; }
+
+    kbd {
+      display: inline-block;
+      min-width: 1.5rem;
+      text-align: center;
+      padding: 0.18rem 0.45rem;
+      font-size: 0.78rem;
+      color: var(--text);
+      background: var(--surface0);
+      border: 1px solid var(--surface2);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+    kbd.leader { background: linear-gradient(135deg, var(--green), var(--teal)); color: var(--crust); border-color: var(--teal); font-weight: 700; }
+    kbd.mod { background: var(--surface1); color: var(--lavender); }
+    kbd.fn { background: var(--surface1); color: var(--peach); }
+
+    .mode-tag {
+      font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.1rem 0.4rem; border-radius: 5px; font-weight: 600;
+      flex: none;
+    }
+    .mode-n { background: rgba(140,170,238,0.15); color: var(--blue); }
+    .mode-i { background: rgba(166,209,137,0.15); color: var(--green); }
+    .mode-v { background: rgba(239,159,118,0.15); color: var(--peach); }
+    .mode-t { background: rgba(202,158,230,0.15); color: var(--mauve); }
+
+    .no-results { text-align: center; padding: 3rem; color: var(--overlay0); display: none; }
+    .card.hidden, .row.hidden { display: none; }
+
+    footer { max-width: 1300px; margin: 2.5rem auto 0; padding: 1.5rem; text-align: center; color: var(--overlay0); font-size: 0.82rem; border-top: 1px solid var(--surface0); }
+    footer code { color: var(--subtext0); }
+
+    .legend { display:flex; flex-wrap:wrap; gap:0.6rem 1.2rem; justify-content:center; margin-top:0.9rem; font-size:0.8rem; color:var(--subtext0); }
+    .legend span { display:flex; align-items:center; gap:0.4rem; }
+
+    @media (max-width: 600px) {
+      .header-inner { gap: 0.75rem; }
+      .leader-pill { order: 3; margin-left: 0; }
+      .search-wrap { order: 4; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo">N</div>
+        <div>
+          <h1>Neovim Cheatsheet</h1>
+          <p>Your config &middot; keymaps &amp; workflow tutorial</p>
+        </div>
+      </div>
+      <div class="leader-pill">
+        <span>Leader key</span>
+        <kbd class="leader">Space</kbd>
+      </div>
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="Filter commands…  (e.g. 'split', 'git', 'debug')" autocomplete="off" />
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Intro / tutorial -->
+    <section class="intro">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        New here? Start with these 4 things
+      </h2>
+      <div class="step"><span class="num">1</span><p>The <strong>Leader</strong> key is <kbd class="leader">Space</kbd>. Most commands begin with it. Press it and pause — <strong>which-key</strong> pops up a menu of what comes next.</p></div>
+      <div class="step"><span class="num">2</span><p>Three core modes: <strong>Normal</strong> (navigate), press <kbd>i</kbd> for <strong>Insert</strong> (type), <kbd>v</kbd> for <strong>Visual</strong> (select). Get back to Normal with <kbd>Esc</kbd> or <kbd>j</kbd><kbd>k</kbd>.</p></div>
+      <div class="step"><span class="num">3</span><p>Open files fast with <kbd class="leader">Space</kbd><kbd>f</kbd><kbd>f</kbd> and search text with <kbd class="leader">Space</kbd><kbd>f</kbd><kbd>s</kbd>. Toggle the file tree with <kbd class="leader">Space</kbd><kbd>e</kbd><kbd>e</kbd>.</p></div>
+      <div class="step"><span class="num">4</span><p>Files <strong>auto-format on save</strong>. Run the current script with <kbd class="leader">Space</kbd><kbd>R</kbd>, and debug it starting with <kbd class="fn">F5</kbd>.</p></div>
+    </section>
+
+    <div class="grid" id="grid"></div>
+    <div class="no-results" id="noResults">No commands match your search.</div>
+  </main>
+
+  <footer>
+    <div>Generated for <code>~/.config/nvim</code> &middot; Neovim 0.12 &middot; Catppuccin Frappé</div>
+    <div class="legend">
+      <span><kbd class="leader">Space</kbd> Leader</span>
+      <span><kbd class="mod">C-</kbd> Ctrl</span>
+      <span><kbd class="fn">F5</kbd> Function key</span>
+      <span><span class="mode-tag mode-n">N</span> Normal</span>
+      <span><span class="mode-tag mode-i">I</span> Insert</span>
+      <span><span class="mode-tag mode-v">V</span> Visual</span>
+      <span><span class="mode-tag mode-t">T</span> Terminal</span>
+    </div>
+  </footer>
+
+  <script>
+    // ---- Data: every section + command in your config ----
+    // keys are arrays of tokens; tokens prefixed with type render as styled <kbd>.
+    //   "L"  -> leader (Space),  "C:x" -> Ctrl chord,  "F:x" -> function key
+    //   "+"  -> visual separator (no key)
+    const L = "L";
+
+    // ---- SVG icon path sets (rendered into colored <svg> per card) ----
+    const icons = {
+      bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+      tree: '<path d="M3 5h8M3 12h13M3 19h18"/><circle cx="18" cy="5" r="2"/>',
+      window: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 9v11"/>',
+      compass: '<circle cx="12" cy="12" r="9"/><path d="m16 8-5 2-2 5 5-2z"/>',
+      edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+      brackets: '<path d="M7 4H5a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2 2 2 0 0 1 2 2v3a2 2 0 0 0 2 2h2M17 4h2a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2 2 2 0 0 0-2 2v3a2 2 0 0 1-2 2h-2"/>',
+      spark: '<path d="M12 3v4M12 17v4M5 12H1M23 12h-4M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/>',
+      wand: '<path d="m15 4 1 1M3 21 14 10M18 7l2 2M14 6l4 4"/><path d="M5 3v4M3 5h4"/>',
+      git: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 3-4 3-6 3.5"/>',
+      alert: '<path d="M10.3 3.8 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+      play: '<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/>',
+      terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/>',
+      gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H2a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 3.2 6.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V8a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>',
+    };
+
+    const sections = [
+      { title: "Essentials", color: "var(--sky)", icon: icons.bolt, items: [
+        { mode: "i", keys: ["j","k"], desc: "Exit insert mode" },
+        { mode: "n", keys: [L,"n","h"], desc: "Clear search highlights" },
+        { mode: "n", keys: [L,"+"], desc: "Increment number under cursor" },
+        { mode: "n", keys: [L,"-"], desc: "Decrement number under cursor" },
+        { mode: "n", keys: ["s","+","motion"], desc: "Substitute with motion" },
+        { mode: "n", keys: ["s","s"], desc: "Substitute whole line" },
+        { mode: "n", keys: ["S"], desc: "Substitute to end of line" },
+        { mode: "v", keys: ["s"], desc: "Substitute selection" },
+      ]},
+      { title: "Find & Search", color: "var(--blue)", icon: icons.search, items: [
+        { mode: "n", keys: [L,"f","f"], desc: "Find files in project" },
+        { mode: "n", keys: [L,"f","r"], desc: "Recently opened files" },
+        { mode: "n", keys: [L,"f","s"], desc: "Live grep (search text in project)" },
+        { mode: "n", keys: [L,"f","c"], desc: "Grep word under cursor" },
+        { mode: "n", keys: [L,"f","t"], desc: "Find TODO/FIX comments" },
+        { mode: "i", keys: ["C:j"], desc: "Telescope: next result" },
+        { mode: "i", keys: ["C:k"], desc: "Telescope: previous result" },
+        { mode: "i", keys: ["C:q"], desc: "Telescope: send results to quickfix" },
+      ]},
+      { title: "File Explorer", color: "var(--green)", icon: icons.tree, items: [
+        { mode: "n", keys: [L,"e","e"], desc: "Toggle file explorer" },
+        { mode: "n", keys: [L,"e","f"], desc: "Toggle explorer on current file" },
+        { mode: "n", keys: [L,"e","c"], desc: "Collapse explorer" },
+        { mode: "n", keys: [L,"e","r"], desc: "Refresh explorer" },
+      ]},
+      { title: "Windows & Tabs", color: "var(--lavender)", icon: icons.window, items: [
+        { mode: "n", keys: [L,"s","v"], desc: "Split window vertically" },
+        { mode: "n", keys: [L,"s","h"], desc: "Split window horizontally" },
+        { mode: "n", keys: [L,"s","e"], desc: "Make splits equal size" },
+        { mode: "n", keys: [L,"s","x"], desc: "Close current split" },
+        { mode: "n", keys: [L,"s","m"], desc: "Maximize / restore split" },
+        { mode: "n", keys: [L,"t","o"], desc: "Open new tab" },
+        { mode: "n", keys: [L,"t","x"], desc: "Close current tab" },
+        { mode: "n", keys: [L,"t","n"], desc: "Next tab" },
+        { mode: "n", keys: [L,"t","p"], desc: "Previous tab" },
+        { mode: "n", keys: [L,"t","f"], desc: "Open current buffer in new tab" },
+      ]},
+      { title: "Code Navigation (LSP)", color: "var(--sapphire)", icon: icons.compass, items: [
+        { mode: "n", keys: ["g","d"], desc: "Go to definition" },
+        { mode: "n", keys: ["g","D"], desc: "Go to declaration" },
+        { mode: "n", keys: ["g","R"], desc: "Show references" },
+        { mode: "n", keys: ["g","i"], desc: "Show implementations" },
+        { mode: "n", keys: ["g","t"], desc: "Show type definitions" },
+        { mode: "n", keys: ["K"], desc: "Hover documentation" },
+        { mode: "n", keys: [L,"c","a"], desc: "Code actions" },
+        { mode: "n", keys: [L,"r","n"], desc: "Smart rename symbol" },
+        { mode: "n", keys: [L,"r","s"], desc: "Restart LSP" },
+      ]},
+      { title: "Editing & Motions", color: "var(--peach)", icon: icons.edit, items: [
+        { mode: "n", keys: ["g","c","c"], desc: "Toggle comment on line" },
+        { mode: "n", keys: ["g","c","+","motion"], desc: "Comment with motion" },
+        { mode: "v", keys: ["g","c"], desc: "Comment selection" },
+        { mode: "n", keys: ["y","s","+","motion","+","char"], desc: "Add surround (e.g. ysiw\")" },
+        { mode: "n", keys: ["d","s","+","char"], desc: "Delete surround" },
+        { mode: "n", keys: ["c","s","+","old","new"], desc: "Change surround" },
+        { mode: "v", keys: ["S","+","char"], desc: "Surround selection" },
+        { mode: "n", keys: ["C: "], desc: "Expand Treesitter selection" },
+      ]},
+      { title: "Text Objects (Treesitter)", color: "var(--teal)", icon: icons.brackets, items: [
+        { mode: "v", keys: ["a","f"], desc: "Around function (i f = inner)" },
+        { mode: "v", keys: ["a","c"], desc: "Around class (i c = inner)" },
+        { mode: "v", keys: ["a","a"], desc: "Around parameter (i a = inner)" },
+        { mode: "n", keys: ["]","f"], desc: "Jump to next function" },
+        { mode: "n", keys: ["[","f"], desc: "Jump to previous function" },
+        { mode: "n", keys: ["]","c"], desc: "Jump to next class" },
+        { mode: "n", keys: ["]","a"], desc: "Jump to next parameter" },
+      ]},
+      { title: "Autocompletion", color: "var(--mauve)", icon: icons.spark, items: [
+        { mode: "i", keys: ["C: "], desc: "Trigger completion menu" },
+        { mode: "i", keys: ["C:j"], desc: "Next suggestion" },
+        { mode: "i", keys: ["C:k"], desc: "Previous suggestion" },
+        { mode: "i", keys: ["Enter"], desc: "Confirm selection" },
+        { mode: "i", keys: ["C:e"], desc: "Close completion menu" },
+        { mode: "i", keys: ["C:f"], desc: "Scroll docs down" },
+        { mode: "i", keys: ["C:b"], desc: "Scroll docs up" },
+      ]},
+      { title: "Format & Lint", color: "var(--yellow)", icon: icons.wand, items: [
+        { mode: "n", keys: ["save"], desc: "Auto-formats on every save (prettier, etc.)" },
+        { mode: "n", keys: [L,"m","p"], desc: "Format file (or selection)" },
+        { mode: "v", keys: [L,"m","p"], desc: "Format selected range" },
+        { mode: "n", keys: [L,"l"], desc: "Run linter on file" },
+      ]},
+      { title: "Git", color: "var(--maroon)", icon: icons.git, items: [
+        { mode: "n", keys: [L,"l","g"], desc: "Open LazyGit" },
+        { mode: "n", keys: ["]","h"], desc: "Next git hunk" },
+        { mode: "n", keys: ["[","h"], desc: "Previous git hunk" },
+        { mode: "n", keys: [L,"h","s"], desc: "Stage hunk" },
+        { mode: "n", keys: [L,"h","r"], desc: "Reset hunk" },
+        { mode: "n", keys: [L,"h","S"], desc: "Stage whole buffer" },
+        { mode: "n", keys: [L,"h","R"], desc: "Reset whole buffer" },
+        { mode: "n", keys: [L,"h","u"], desc: "Undo stage hunk" },
+        { mode: "n", keys: [L,"h","p"], desc: "Preview hunk" },
+        { mode: "n", keys: [L,"h","b"], desc: "Blame line (full)" },
+        { mode: "n", keys: [L,"h","B"], desc: "Toggle inline line blame" },
+        { mode: "n", keys: [L,"h","d"], desc: "Diff this file" },
+      ]},
+      { title: "Diagnostics & TODOs", color: "var(--red)", icon: icons.alert, items: [
+        { mode: "n", keys: [L,"d"], desc: "Show line diagnostics" },
+        { mode: "n", keys: [L,"D"], desc: "Buffer diagnostics (Telescope)" },
+        { mode: "n", keys: ["]","d"], desc: "Next diagnostic" },
+        { mode: "n", keys: ["[","d"], desc: "Previous diagnostic" },
+        { mode: "n", keys: [L,"x","w"], desc: "Trouble: workspace diagnostics" },
+        { mode: "n", keys: [L,"x","d"], desc: "Trouble: document diagnostics" },
+        { mode: "n", keys: [L,"x","q"], desc: "Trouble: quickfix list" },
+        { mode: "n", keys: [L,"x","t"], desc: "Trouble: TODO list" },
+        { mode: "n", keys: ["]","t"], desc: "Next TODO comment" },
+        { mode: "n", keys: ["[","t"], desc: "Previous TODO comment" },
+      ]},
+      { title: "Run & Debug", color: "var(--flamingo)", icon: icons.play, items: [
+        { mode: "n", keys: [L,"R"], desc: "Run current file (py/js/ts/bash/lua)" },
+        { mode: "n", keys: ["F:5"], desc: "Debug: start / continue" },
+        { mode: "n", keys: ["F:10"], desc: "Debug: step over" },
+        { mode: "n", keys: ["F:11"], desc: "Debug: step into" },
+        { mode: "n", keys: ["F:12"], desc: "Debug: step out" },
+        { mode: "n", keys: ["F:9"], desc: "Toggle breakpoint" },
+        { mode: "n", keys: [L,"b"], desc: "Toggle breakpoint" },
+        { mode: "n", keys: [L,"B"], desc: "Conditional breakpoint" },
+        { mode: "n", keys: ["F:7"], desc: "Toggle debug UI" },
+      ]},
+      { title: "Terminal", color: "var(--mauve)", icon: icons.terminal, items: [
+        { mode: "n", keys: ["C:\\"], desc: "Toggle floating terminal" },
+        { mode: "t", keys: ["Esc"], desc: "Exit terminal mode" },
+        { mode: "t", keys: ["j","k"], desc: "Exit terminal mode" },
+      ]},
+      { title: "Manage the Config", color: "var(--subtext0)", icon: icons.gear, items: [
+        { mode: "n", keys: [":Lazy"], desc: "Plugin manager (update/sync/clean)" },
+        { mode: "n", keys: [":Mason"], desc: "Install LSP servers / tools" },
+        { mode: "n", keys: [":checkhealth"], desc: "Diagnose config health" },
+        { mode: "n", keys: [":ConformInfo"], desc: "Inspect formatters" },
+      ]},
+    ];
+
+    // ---- Render a single key token ----
+    function renderKey(tok){
+      if (tok === "+") return '<span class="plus">›</span>';
+      if (tok === "L") return '<kbd class="leader">Space</kbd>';
+      if (tok === "C: ") return '<kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>Space</kbd>';
+      if (tok === "C:\\") return '<kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>\\</kbd>';
+      if (tok.startsWith("C:")) return '<kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>'+tok.slice(2)+'</kbd>';
+      if (tok.startsWith("F:")) return '<kbd class="fn">F'+tok.slice(2)+'</kbd>';
+      if (tok.length > 2) return '<kbd style="text-transform:none">'+tok+'</kbd>';
+      return '<kbd>'+tok+'</kbd>';
+    }
+
+    function modeTag(m){
+      const map = { n:["N","mode-n"], i:["I","mode-i"], v:["V","mode-v"], t:["T","mode-t"] };
+      const [label, cls] = map[m] || ["N","mode-n"];
+      return '<span class="mode-tag '+cls+'">'+label+'</span>';
+    }
+
+    // ---- Build the grid ----
+    const grid = document.getElementById("grid");
+    sections.forEach(sec => {
+      const card = document.createElement("section");
+      card.className = "card";
+      const rows = sec.items.map(it => {
+        const keysHtml = it.keys.map(renderKey).join("");
+        const search = (it.desc + " " + it.keys.join(" ")).toLowerCase();
+        return '<div class="row" data-search="'+search.replace(/"/g,'')+'">'+
+                 modeTag(it.mode) +
+                 '<span class="desc">'+it.desc+'</span>'+
+                 '<span class="keys">'+keysHtml+'</span>'+
+               '</div>';
+      }).join("");
+      const iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="'+sec.color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+sec.icon+'</svg>';
+      card.innerHTML =
+        '<div class="card-head">'+
+          '<span class="icon">'+iconSvg+'</span>'+
+          '<h3>'+sec.title+'</h3>'+
+          '<span class="count">'+sec.items.length+'</span>'+
+        '</div>'+
+        '<div class="rows">'+rows+'</div>';
+      grid.appendChild(card);
+    });
+
+    // ---- Live search ----
+    const search = document.getElementById("search");
+    const noResults = document.getElementById("noResults");
+    search.addEventListener("input", () => {
+      const q = search.value.trim().toLowerCase();
+      let anyCard = false;
+      document.querySelectorAll(".card").forEach(card => {
+        let anyRow = false;
+        card.querySelectorAll(".row").forEach(row => {
+          const match = !q || row.dataset.search.includes(q);
+          row.classList.toggle("hidden", !match);
+          if (match) anyRow = true;
+        });
+        card.classList.toggle("hidden", !anyRow);
+        if (anyRow) anyCard = true;
+      });
+      noResults.style.display = anyCard ? "none" : "block";
+    });
+
+    // keyboard shortcut: "/" focuses search
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && document.activeElement !== search) { e.preventDefault(); search.focus(); }
+      if (e.key === "Escape" && document.activeElement === search) { search.value=""; search.dispatchEvent(new Event("input")); search.blur(); }
+    });
+  </script>
+</body>
+</html>

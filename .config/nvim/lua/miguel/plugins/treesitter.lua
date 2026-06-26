@@ -4,6 +4,7 @@ return {
   build = ":TSUpdate",
   dependencies = {
     "windwp/nvim-ts-autotag",
+    "nvim-treesitter/nvim-treesitter-textobjects",
   },
   config = function()
     -- import nvim-treesitter plugin
@@ -55,6 +56,35 @@ return {
           node_incremental = "<C-space>",
           scope_incremental = false,
           node_decremental = "<bs>",
+        },
+      },
+      -- treesitter-based text objects and motions
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true, -- jump forward to the next text object
+          keymaps = {
+            ["af"] = { query = "@function.outer", desc = "Select outer function" },
+            ["if"] = { query = "@function.inner", desc = "Select inner function" },
+            ["ac"] = { query = "@class.outer", desc = "Select outer class" },
+            ["ic"] = { query = "@class.inner", desc = "Select inner class" },
+            ["aa"] = { query = "@parameter.outer", desc = "Select outer parameter" },
+            ["ia"] = { query = "@parameter.inner", desc = "Select inner parameter" },
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true, -- add movements to the jumplist
+          goto_next_start = {
+            ["]f"] = { query = "@function.outer", desc = "Next function start" },
+            ["]c"] = { query = "@class.outer", desc = "Next class start" },
+            ["]a"] = { query = "@parameter.inner", desc = "Next parameter" },
+          },
+          goto_previous_start = {
+            ["[f"] = { query = "@function.outer", desc = "Previous function start" },
+            ["[c"] = { query = "@class.outer", desc = "Previous class start" },
+            ["[a"] = { query = "@parameter.inner", desc = "Previous parameter" },
+          },
         },
       },
     })

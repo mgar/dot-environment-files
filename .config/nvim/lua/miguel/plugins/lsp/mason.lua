@@ -1,7 +1,7 @@
 return {
-	"williamboman/mason.nvim",
+	"mason-org/mason.nvim",
 	dependencies = {
-		"williamboman/mason-lspconfig.nvim",
+		"mason-org/mason-lspconfig.nvim",
 		"WhoIsSethDaniel/mason-tool-installer.nvim",
 	},
 	config = function()
@@ -27,7 +27,7 @@ return {
 		mason_lspconfig.setup({
 			-- list of servers for mason to install
 			ensure_installed = {
-				-- "tsserver",
+				"ts_ls",
 				"html",
 				"cssls",
 				"tailwindcss",
@@ -37,7 +37,10 @@ return {
 				"emmet_ls",
 				"prismals",
 				"pyright",
+				"bashls",
 			},
+			-- servers are configured + enabled explicitly in lsp/lspconfig.lua
+			automatic_enable = false,
 		})
 
 		mason_tool_installer.setup({
@@ -50,6 +53,7 @@ return {
 				"pylint", -- python linter
 				"eslint_d", -- js linter
 				"tflint", -- terraform linter
+				"shellcheck", -- bash/shell linter
 			},
 		})
 	end,

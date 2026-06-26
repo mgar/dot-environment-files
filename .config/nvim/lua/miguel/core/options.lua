@@ -42,3 +42,21 @@ opt.splitbelow = true -- split horizontal window to the bottom
 
 -- turn off swapfile
 opt.swapfile = false
+
+-- include local options in sessions (recommended by auto-session)
+opt.sessionoptions:append("localoptions")
+
+-- disable unused language providers (removes :checkhealth noise; these are
+-- only for legacy remote plugins, not LSP/treesitter/lua)
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_python3_provider = 0
+
+-- autocommands
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    vim.opt_local.wrap = true
+  end,
+})

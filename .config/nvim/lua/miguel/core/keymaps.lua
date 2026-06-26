@@ -30,3 +30,25 @@ keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" 
 keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
 keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" }) --  go to previous tab
 keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" }) --  move current buffer to new tab
+
+-- run the current file based on its filetype, in a terminal split
+local run_cmds = {
+	python = "python3",
+	javascript = "node",
+	typescript = "npx tsx", -- requires `tsx` (npx will offer to install it)
+	sh = "bash",
+	bash = "bash",
+	lua = "lua",
+}
+
+keymap.set("n", "<leader>R", function()
+	local runner = run_cmds[vim.bo.filetype]
+	if not runner then
+		vim.notify("No runner configured for filetype: " .. vim.bo.filetype, vim.log.levels.WARN)
+		return
+	end
+	vim.cmd("write")
+	local file = vim.fn.shellescape(vim.fn.expand("%:p"))
+	vim.cmd("botright 15split | terminal " .. runner .. " " .. file)
+	vim.cmd("startinsert")
+end, { desc = "Run current file" })
