@@ -2,13 +2,10 @@ return {
   "neovim/nvim-lspconfig",
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
-    "hrsh7th/cmp-nvim-lsp",
+    "saghen/blink.cmp",
     { "antosha417/nvim-lsp-file-operations", config = true },
   },
   config = function()
-    -- import cmp-nvim-lsp plugin
-    local cmp_nvim_lsp = require("cmp_nvim_lsp")
-
     local keymap = vim.keymap -- for conciseness
 
     vim.api.nvim_create_autocmd("LspAttach", {
@@ -61,11 +58,30 @@ return {
 
         opts.desc = "Restart LSP"
         keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
+
+        -- Pre-warm completion. Some servers (notably pyright) take ~1.7s to
+        -- answer the *first* completion request while they build their import
+        -- index; every request after that is ~1ms. Fire a throwaway request on
+        -- attach so the warmup happens while you read the file, making your
+        -- first real completion feel instant.
+        if not vim.b[ev.buf].completion_prewarmed then
+          vim.b[ev.buf].completion_prewarmed = true
+          vim.schedule(function()
+            if not vim.api.nvim_buf_is_valid(ev.buf) then
+              return
+            end
+            local params = {
+              textDocument = vim.lsp.util.make_text_document_params(ev.buf),
+              position = { line = 0, character = 0 },
+            }
+            vim.lsp.buf_request(ev.buf, "textDocument/completion", params, function() end)
+          end)
+        end
       end,
     })
 
-    -- used to enable autocompletion (assign to every lsp server config)
-    local capabilities = cmp_nvim_lsp.default_capabilities()
+    -- completion capabilities provided by blink.cmp (merged with Neovim defaults)
+    local capabilities = require("blink.cmp").get_lsp_capabilities()
 
     -- Change the Diagnostic symbols in the sign column (gutter)
     vim.diagnostic.config({
@@ -105,6 +121,24 @@ return {
     -- configure emmet language server
     vim.lsp.config("emmet_ls", {
       filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
+    })
+
+    -- configure python server: enable auto-import completions + venv detection
+    vim.lsp.config("pyright", {
+      settings = {
+        pyright = {
+          -- let the configured formatter handle imports if desired
+          disableOrganizeImports = false,
+        },
+        python = {
+          analysis = {
+            autoImportCompletions = true,
+            autoSearchPaths = true,
+            useLibraryCodeForTypes = true,
+            diagnosticMode = "openFilesOnly",
+          },
+        },
+      },
     })
 
     -- configure lua server (with special settings)

@@ -25,7 +25,7 @@ return {
 							information = { "underline" },
 						},
 					},
-					cmp = true, -- Integrate with nvim-cmp
+					blink_cmp = true, -- Integrate with blink.cmp
 					gitsigns = true, -- Enable Git signs
 					nvimtree = true, -- Enable for nvim-tree
 					telescope = true, -- Enable Telescope styling

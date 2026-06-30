@@ -52,3 +52,17 @@ keymap.set("n", "<leader>R", function()
 	vim.cmd("botright 15split | terminal " .. runner .. " " .. file)
 	vim.cmd("startinsert")
 end, { desc = "Run current file" })
+
+-- inspect completion/LSP state for the current buffer (debugging helper)
+keymap.set("n", "<leader>ci", function()
+	local clients = vim.tbl_map(function(c)
+		return c.name
+	end, vim.lsp.get_clients({ bufnr = 0 }))
+	local lsp = #clients > 0 and table.concat(clients, ", ") or "none"
+	local blink_ok = pcall(require, "blink.cmp")
+	vim.notify(
+		("LSP: %s\nblink.cmp loaded: %s\nfiletype: %s"):format(lsp, tostring(blink_ok), vim.bo.filetype),
+		vim.log.levels.INFO,
+		{ title = "Completion status" }
+	)
+end, { desc = "Completion/LSP status" })
