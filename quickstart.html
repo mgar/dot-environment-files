@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Start &middot; tmux + nvim day-to-day</title>
+  <style>
+    /* ---- Catppuccin Frappé palette (matches the colorscheme) ---- */
+    :root {
+      --base: #303446; --mantle: #292c3c; --crust: #232634;
+      --surface0: #414559; --surface1: #51576d; --surface2: #626880;
+      --overlay0: #737994; --text: #c6d0f5; --subtext1: #b5bfe2; --subtext0: #a5adce;
+      --blue: #8caaee; --lavender: #babbf1; --sapphire: #85c1dc; --sky: #99d1db;
+      --teal: #81c8be; --green: #a6d189; --yellow: #e5c890; --peach: #ef9f76;
+      --maroon: #ea999c; --red: #e78284; --mauve: #ca9ee6; --pink: #f4b8e4;
+      --header-tint: 41,44,60; --card-tint: 41,44,60;
+    }
+    /* ---- Light theme: Catppuccin Latte ---- */
+    html[data-theme="light"] {
+      --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+      --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+      --overlay0: #9ca0b0; --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+      --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5; --sky: #04a5e5;
+      --teal: #179299; --green: #40a02b; --yellow: #df8e1d; --peach: #fe640b;
+      --maroon: #e64553; --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+      --header-tint: 230,233,239; --card-tint: 220,224,232;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(140,170,238,0.12), transparent 60%),
+        radial-gradient(1000px 500px at 110% 10%, rgba(202,158,230,0.12), transparent 55%),
+        var(--base);
+      color: var(--text); line-height: 1.5; min-height: 100vh; padding-bottom: 4rem;
+    }
+    code, kbd { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    /* ---- Header ---- */
+    header {
+      position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(var(--header-tint),0.92), rgba(var(--header-tint),0.78));
+      border-bottom: 1px solid var(--surface0);
+    }
+    .header-inner { max-width: 1200px; margin: 0 auto; padding: 1.1rem 1.5rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 0.85rem; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--blue), var(--mauve));
+      color: var(--crust); font-weight: 800; font-size: 1.3rem;
+      box-shadow: 0 6px 18px rgba(140,170,238,0.25);
+    }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand p { font-size: 0.82rem; color: var(--subtext0); }
+    .nav { margin-left: auto; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .nav a, .nav button {
+      font-family: inherit; font-size: 0.85rem; color: var(--subtext1); text-decoration: none;
+      background: var(--surface0); padding: 0.45rem 0.85rem; border-radius: 999px;
+      border: 1px solid var(--surface1); transition: color .15s, border-color .15s;
+    }
+    .nav a:hover, .nav button:hover { color: var(--text); border-color: var(--blue); }
+    .nav button { cursor: pointer; }
+
+    /* ---- Layout ---- */
+    main { max-width: 1200px; margin: 0 auto; padding: 1.75rem 1.5rem 0; }
+    .intro {
+      background: linear-gradient(135deg, rgba(140,170,238,0.10), rgba(202,158,230,0.08));
+      border: 1px solid var(--surface0); border-radius: 16px; padding: 1.4rem 1.6rem; margin-bottom: 1.75rem;
+    }
+    .intro h2 { font-size: 1.05rem; color: var(--lavender); margin-bottom: 0.6rem; }
+    .intro p { font-size: 0.9rem; color: var(--subtext1); max-width: 70ch; }
+    .intro p + p { margin-top: 0.5rem; }
+    .intro code { color: var(--sky); background: var(--crust); padding: 0.1rem 0.4rem; border-radius: 5px; font-size: 0.85em; }
+
+    .section-title { display: flex; align-items: center; gap: 0.7rem; margin: 2rem 0 1rem; }
+    .section-title .dot { width: 12px; height: 12px; border-radius: 4px; }
+    .section-title h2 { font-size: 1.15rem; font-weight: 700; }
+    .section-title .sub { font-size: 0.82rem; color: var(--overlay0); margin-left: auto; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.1rem; align-items: start; }
+    .card { background: linear-gradient(180deg, var(--mantle), rgba(var(--card-tint),0.6)); border: 1px solid var(--surface0); border-radius: 14px; overflow: hidden; }
+    .card-head { display: flex; align-items: center; gap: 0.7rem; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--surface0); }
+    .card-head h3 { font-size: 0.95rem; font-weight: 650; }
+    .card-head .emoji { font-size: 1.05rem; }
+    .rows { padding: 0.4rem 0.6rem 0.7rem; }
+    .row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.55rem; border-radius: 8px; transition: background 0.12s; }
+    .row:hover { background: var(--surface0); }
+    .row .desc { font-size: 0.86rem; color: var(--subtext1); flex: 1; }
+    .keys { display: flex; gap: 0.25rem; align-items: center; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+    .keys .plus { color: var(--overlay0); font-size: 0.7rem; }
+    .keys .then { color: var(--overlay0); font-size: 0.68rem; font-style: italic; padding: 0 0.15rem; }
+
+    kbd {
+      display: inline-block; min-width: 1.5rem; text-align: center; padding: 0.18rem 0.45rem;
+      font-size: 0.76rem; color: var(--text); background: var(--surface0);
+      border: 1px solid var(--surface2); border-bottom-width: 2px; border-radius: 6px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.25); white-space: nowrap;
+    }
+    kbd.leader { background: linear-gradient(135deg, var(--green), var(--teal)); color: var(--crust); border-color: var(--teal); font-weight: 700; }
+    kbd.prefix { background: linear-gradient(135deg, var(--mauve), var(--pink)); color: var(--crust); border-color: var(--mauve); font-weight: 700; }
+    kbd.mod { background: var(--surface1); color: var(--lavender); }
+
+    .mode-tag { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 5px; font-weight: 600; flex: none; }
+    .mode-n { background: rgba(140,170,238,0.15); color: var(--blue); }
+    .mode-v { background: rgba(239,159,118,0.15); color: var(--peach); }
+    .mode-t { background: rgba(202,158,230,0.15); color: var(--mauve); }
+    .mode-cmd { background: rgba(229,200,144,0.15); color: var(--yellow); }
+
+    footer { max-width: 1200px; margin: 2.5rem auto 0; padding: 1.5rem; text-align: center; color: var(--overlay0); font-size: 0.82rem; border-top: 1px solid var(--surface0); }
+    footer code { color: var(--subtext0); }
+    footer a { color: var(--blue); text-decoration: none; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; justify-content: center; margin: 1.2rem 0 0; font-size: 0.8rem; color: var(--subtext0); }
+    .legend span { display: flex; align-items: center; gap: 0.4rem; }
+
+    @media (max-width: 600px) { .nav { order: 3; margin-left: 0; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo">⌨</div>
+        <div>
+          <h1>Quick Start</h1>
+          <p>tmux + nvim &middot; the day-to-day essentials</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="#tmux">tmux</a>
+        <a href="#nvim">nvim</a>
+        <a href="#claude">Claude</a>
+        <a href="#shell">shell</a>
+        <a href=".config/nvim/cheatsheet.html">Full nvim cheatsheet &rarr;</a>
+        <button id="theme-toggle" aria-label="Toggle light/dark theme">🌙 Dark</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="intro">
+      <h2>The 30-second mental model</h2>
+      <p><strong>tmux</strong> runs your terminal <em>sessions</em>: split panes side by side (nvim + Claude), and keep everything alive after you close iTerm2. Its <em>prefix</em> key is <kbd class="prefix">Ctrl</kbd><span class="keys plus">+</span><kbd class="prefix">a</kbd> — press &amp; release it, then hit the next key.</p>
+      <p><strong>nvim</strong> is modal: you're in <em>Normal</em> mode (moving/commands) by default; press <kbd>i</kbd> to <em>Insert</em> (type text), and <kbd>Esc</kbd> or <kbd>j</kbd><kbd>k</kbd> to go back. Its <em>leader</em> key is <kbd class="leader">Space</kbd>.</p>
+      <p>Move between everything — nvim splits, tmux panes, the Claude terminal — with the same <kbd class="mod">Ctrl</kbd><span class="keys plus">+</span><kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd>. No prefix, no leader.</p>
+    </div>
+
+    <!-- ============================ TMUX ============================ -->
+    <div class="section-title" id="tmux">
+      <span class="dot" style="background:var(--mauve)"></span>
+      <h2>tmux</h2>
+      <span class="sub">prefix = Ctrl-a</span>
+    </div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🪟</span><h3>Sessions (start / leave / return)</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Start a named session</span><span class="keys"><kbd>tmux new -s work</kbd></span></div>
+          <div class="row"><span class="desc">Detach — leave it running in the background</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>d</kbd></span></div>
+          <div class="row"><span class="desc">List sessions</span><span class="keys"><kbd>tmux ls</kbd></span></div>
+          <div class="row"><span class="desc">Reattach to a session</span><span class="keys"><kbd>tmux attach -t work</kbd></span></div>
+          <div class="row"><span class="desc">Rename current session</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>$</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🔲</span><h3>Panes (splits within a window)</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Split right (vertical) — <kbd>\</kbd> needs no Shift</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>\</kbd><span class="plus">/</span><kbd>|</kbd></span></div>
+          <div class="row"><span class="desc">Split down (horizontal)</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>-</kbd></span></div>
+          <div class="row"><span class="desc">Move between panes (also into/out of nvim)</span><span class="keys"><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd></span></div>
+          <div class="row"><span class="desc">Zoom pane fullscreen / restore</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>z</kbd></span></div>
+          <div class="row"><span class="desc">Resize pane (repeatable)</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd></span></div>
+          <div class="row"><span class="desc">Close pane</span><span class="keys"><kbd>exit</kbd><span class="plus">/</span><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>d</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🗂️</span><h3>Windows (tabs)</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">New window (opens in current dir)</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>c</kbd></span></div>
+          <div class="row"><span class="desc">Next / previous window</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>n</kbd><span class="plus">/</span><kbd>p</kbd></span></div>
+          <div class="row"><span class="desc">Jump to window by number</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span></div>
+          <div class="row"><span class="desc">Toggle last-used window</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>l</kbd></span></div>
+          <div class="row"><span class="desc">Pick a window from a list</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>w</kbd></span></div>
+          <div class="row"><span class="desc">Rename current window</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>,</kbd></span></div>
+          <div class="row"><span class="desc">Close window (confirms)</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>&amp;</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">⚙️</span><h3>Handy</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Reload tmux config</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>r</kbd></span></div>
+          <div class="row"><span class="desc">Send a literal Ctrl-a to the shell</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd class="mod">C-a</kbd></span></div>
+          <div class="row"><span class="desc">Scroll / copy mode (q to exit) — mouse works too</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>[</kbd></span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================ NVIM ============================ -->
+    <div class="section-title" id="nvim">
+      <span class="dot" style="background:var(--green)"></span>
+      <h2>nvim</h2>
+      <span class="sub">leader = Space</span>
+    </div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🔄</span><h3>Modes &amp; saving</h3></div>
+        <div class="rows">
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Enter Insert mode (type text)</span><span class="keys"><kbd>i</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Open a new line below &amp; insert</span><span class="keys"><kbd>o</kbd></span></div>
+          <div class="row"><span class="desc">Back to Normal mode</span><span class="keys"><kbd>Esc</kbd><span class="plus">/</span><kbd>j</kbd><kbd>k</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-cmd">:</span><span class="desc">Save</span><span class="keys"><kbd>:w</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-cmd">:</span><span class="desc">Save &amp; quit</span><span class="keys"><kbd>:wq</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-cmd">:</span><span class="desc">Quit (force, no save)</span><span class="keys"><kbd>:q!</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🧭</span><h3>Move around</h3></div>
+        <div class="rows">
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Left / down / up / right</span><span class="keys"><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Word forward / back</span><span class="keys"><kbd>w</kbd><span class="plus">/</span><kbd>b</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Line start / end</span><span class="keys"><kbd>0</kbd><span class="plus">/</span><kbd>$</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Top / bottom of file</span><span class="keys"><kbd>gg</kbd><span class="plus">/</span><kbd>G</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Jump to line number</span><span class="keys"><kbd>:42</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">✂️</span><h3>Edit essentials</h3></div>
+        <div class="rows">
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Delete / yank (copy) line</span><span class="keys"><kbd>dd</kbd><span class="plus">/</span><kbd>yy</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Paste after / before</span><span class="keys"><kbd>p</kbd><span class="plus">/</span><kbd>P</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Undo / redo</span><span class="keys"><kbd>u</kbd><span class="plus">/</span><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>r</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-v">V</span><span class="desc">Start selecting (char / line)</span><span class="keys"><kbd>v</kbd><span class="plus">/</span><kbd>V</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Repeat last change</span><span class="keys"><kbd>.</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🔎</span><h3>Find files &amp; text</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Find files (by name)</span><span class="keys"><kbd class="leader">Space</kbd><kbd>f</kbd><kbd>f</kbd></span></div>
+          <div class="row"><span class="desc">Search text across project (grep)</span><span class="keys"><kbd class="leader">Space</kbd><kbd>f</kbd><kbd>s</kbd></span></div>
+          <div class="row"><span class="desc">Recent files</span><span class="keys"><kbd class="leader">Space</kbd><kbd>f</kbd><kbd>r</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-n">N</span><span class="desc">Search in file / next / prev</span><span class="keys"><kbd>/</kbd><span class="plus">·</span><kbd>n</kbd><span class="plus">/</span><kbd>N</kbd></span></div>
+          <div class="row"><span class="desc">Clear search highlight</span><span class="keys"><kbd class="leader">Space</kbd><kbd>n</kbd><kbd>h</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🌳</span><h3>File explorer</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Toggle file tree</span><span class="keys"><kbd class="leader">Space</kbd><kbd>e</kbd><kbd>e</kbd></span></div>
+          <div class="row"><span class="desc">Reveal current file in tree</span><span class="keys"><kbd class="leader">Space</kbd><kbd>e</kbd><kbd>f</kbd></span></div>
+          <div class="row"><span class="desc">Run current file</span><span class="keys"><kbd class="leader">Space</kbd><kbd>R</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🪟</span><h3>Splits &amp; resizing</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Split vertical / horizontal</span><span class="keys"><kbd class="leader">Space</kbd><kbd>s</kbd><kbd>v</kbd><span class="plus">/</span><kbd>s</kbd><kbd>h</kbd></span></div>
+          <div class="row"><span class="desc">Move between splits (also to Claude/tmux)</span><span class="keys"><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd></span></div>
+          <div class="row"><span class="desc">Resize width — narrower / wider</span><span class="keys"><kbd class="leader">Space</kbd><kbd>&larr;</kbd><span class="plus">/</span><kbd>&rarr;</kbd></span></div>
+          <div class="row"><span class="desc">Resize height — taller / shorter</span><span class="keys"><kbd class="leader">Space</kbd><kbd>&uarr;</kbd><span class="plus">/</span><kbd>&darr;</kbd></span></div>
+          <div class="row"><span class="desc">Reset all splits to equal size</span><span class="keys"><kbd class="leader">Space</kbd><kbd>s</kbd><kbd>e</kbd></span></div>
+          <div class="row"><span class="desc">Maximize / restore current split</span><span class="keys"><kbd class="leader">Space</kbd><kbd>s</kbd><kbd>m</kbd></span></div>
+          <div class="row"><span class="desc">Close current split</span><span class="keys"><kbd class="leader">Space</kbd><kbd>s</kbd><kbd>x</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">💡</span><h3>Discoverability</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Press leader &amp; wait — which-key shows all options</span><span class="keys"><kbd class="leader">Space</kbd></span></div>
+          <div class="row"><span class="desc">Full, searchable keymap reference</span><span class="keys"><a href=".config/nvim/cheatsheet.html" style="color:var(--blue);text-decoration:none;font-size:0.82rem">cheatsheet.html &rarr;</a></span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================ CLAUDE ============================ -->
+    <div class="section-title" id="claude">
+      <span class="dot" style="background:var(--peach)"></span>
+      <h2>Claude Code</h2>
+      <span class="sub">two ways to use it</span>
+    </div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🤝</span><h3>In-editor bridge (leader a)</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Toggle the Claude split</span><span class="keys"><kbd class="leader">Space</kbd><kbd>a</kbd><kbd>c</kbd></span></div>
+          <div class="row"><span class="desc">Focus / jump into Claude</span><span class="keys"><kbd class="leader">Space</kbd><kbd>a</kbd><kbd>f</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-v">V</span><span class="desc">Send selected lines to Claude</span><span class="keys"><kbd class="leader">Space</kbd><kbd>a</kbd><kbd>s</kbd></span></div>
+          <div class="row"><span class="desc">Add current file to context</span><span class="keys"><kbd class="leader">Space</kbd><kbd>a</kbd><kbd>b</kbd></span></div>
+          <div class="row"><span class="desc">Accept / reject Claude's diff</span><span class="keys"><kbd class="leader">Space</kbd><kbd>a</kbd><kbd>a</kbd><span class="plus">/</span><kbd>a</kbd><kbd>d</kbd></span></div>
+          <div class="row"><span class="mode-tag mode-t">T</span><span class="desc">Jump out of Claude back to code</span><span class="keys"><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>h</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🖥️</span><h3>Standalone pane (full CLI)</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">1. Split a tmux pane beside nvim</span><span class="keys"><kbd class="prefix">C-a</kbd><span class="then">then</span><kbd>\</kbd></span></div>
+          <div class="row"><span class="desc">2. Run Claude there</span><span class="keys"><kbd>claude</kbd></span></div>
+          <div class="row"><span class="desc">Best for skills, plan mode, MCP, big multi-file tasks &amp; git/PR work.</span><span class="keys"></span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================ SHELL ============================ -->
+    <div class="section-title" id="shell">
+      <span class="dot" style="background:var(--blue)"></span>
+      <h2>Shell tools</h2>
+      <span class="sub">zoxide · eza · bat · fzf</span>
+    </div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🚀</span><h3>Navigation &amp; listing</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Jump to a frequent dir (fuzzy)</span><span class="keys"><kbd>z partial-name</kbd></span></div>
+          <div class="row"><span class="desc">Interactive dir picker</span><span class="keys"><kbd>zi</kbd></span></div>
+          <div class="row"><span class="desc">List with icons &amp; git status</span><span class="keys"><kbd>ll</kbd><span class="plus">/</span><kbd>la</kbd></span></div>
+          <div class="row"><span class="desc">Tree view</span><span class="keys"><kbd>tree</kbd></span></div>
+          <div class="row"><span class="desc">View a file (syntax highlighted)</span><span class="keys"><kbd>cat file</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="emoji">🔍</span><h3>fzf (fuzzy finder)</h3></div>
+        <div class="rows">
+          <div class="row"><span class="desc">Insert a file path at cursor</span><span class="keys"><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>t</kbd></span></div>
+          <div class="row"><span class="desc">Fuzzy-search command history</span><span class="keys"><kbd class="mod">Ctrl</kbd><span class="plus">+</span><kbd>r</kbd></span></div>
+          <div class="row"><span class="desc">Fuzzy cd into a directory</span><span class="keys"><kbd class="mod">Alt</kbd><span class="plus">+</span><kbd>c</kbd></span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="legend">
+      <span><kbd class="prefix">C-a</kbd> tmux prefix</span>
+      <span><kbd class="leader">Space</kbd> nvim leader</span>
+      <span><span class="mode-tag mode-n">N</span> Normal</span>
+      <span><span class="mode-tag mode-v">V</span> Visual</span>
+      <span><span class="mode-tag mode-t">T</span> Terminal</span>
+      <span><span class="mode-tag mode-cmd">:</span> Command</span>
+    </div>
+  </main>
+
+  <footer>
+    <p>Day-to-day quick start &middot; part of <code>dot-environment-files</code>. For the exhaustive nvim keymap list, see <a href=".config/nvim/cheatsheet.html">the full cheatsheet</a>.</p>
+  </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById("theme-toggle");
+      var saved = localStorage.getItem("quickstart-theme");
+      var prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+      apply(saved || (prefersLight ? "light" : "dark"));
+      btn.addEventListener("click", function () {
+        var next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+        apply(next);
+        localStorage.setItem("quickstart-theme", next);
+      });
+      function apply(theme) {
+        root.setAttribute("data-theme", theme);
+        btn.textContent = theme === "light" ? "☀️ Light" : "🌙 Dark";
+      }
+    })();
+  </script>
+</body>
+</html>

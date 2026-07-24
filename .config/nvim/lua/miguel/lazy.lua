@@ -19,4 +19,18 @@ require("lazy").setup({ { import = "miguel.plugins" }, { import = "miguel.plugin
   change_detection = {
     notify = false,
   },
+  performance = {
+    rtp = {
+      -- Skip sourcing built-in runtime plugins we don't use (faster startup).
+      -- matchit/matchparen intentionally left enabled — some plugins expect them.
+      disabled_plugins = {
+        "gzip",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
 })

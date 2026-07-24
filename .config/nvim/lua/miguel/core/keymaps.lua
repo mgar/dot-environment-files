@@ -25,6 +25,37 @@ keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" }) 
 keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" }) -- make split windows equal width & height
 keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" }) -- close current split window
 
+-- resize splits with <leader> + arrow keys (Left/Right adjust width, Up/Down
+-- height). Not Ctrl+arrow — macOS binds those to Mission Control (switch Spaces),
+-- so they never reach nvim.
+keymap.set("n", "<leader><Left>", "<cmd>vertical resize -4<CR>", { desc = "Shrink split width" })
+keymap.set("n", "<leader><Right>", "<cmd>vertical resize +4<CR>", { desc = "Grow split width" })
+keymap.set("n", "<leader><Up>", "<cmd>resize +2<CR>", { desc = "Grow split height" })
+keymap.set("n", "<leader><Down>", "<cmd>resize -2<CR>", { desc = "Shrink split height" })
+
+-- Seamless navigation OUT of the Claude terminal into nvim windows.
+-- vim-tmux-navigator installs GLOBAL terminal mappings (only when $TMUX is set)
+-- that use `<C-w>:...<cr>` — that command-line trick doesn't work inside
+-- Claude's full-screen TUI, so the command name leaks as literal text. It also
+-- loads after core/keymaps, so any global mapping we set here gets overwritten.
+-- Fix: set BUFFER-LOCAL terminal mappings on the Claude terminal via autocmd.
+-- Buffer-local mappings always take precedence over the plugin's global ones,
+-- regardless of load order, and a Lua callback can't leak keys to the terminal.
+vim.api.nvim_create_autocmd("TermOpen", {
+	group = vim.api.nvim_create_augroup("miguel_claude_nav", { clear = true }),
+	callback = function(args)
+		local name = vim.api.nvim_buf_get_name(args.buf)
+		if not (name:match("claude") or vim.bo[args.buf].filetype == "snacks_terminal") then
+			return
+		end
+		local o = { buffer = args.buf, silent = true }
+		vim.keymap.set("t", "<C-h>", function() vim.cmd("TmuxNavigateLeft") end, o)
+		vim.keymap.set("t", "<C-j>", function() vim.cmd("TmuxNavigateDown") end, o)
+		vim.keymap.set("t", "<C-k>", function() vim.cmd("TmuxNavigateUp") end, o)
+		vim.keymap.set("t", "<C-l>", function() vim.cmd("TmuxNavigateRight") end, o)
+	end,
+})
+
 keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" }) -- open new tab
 keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" }) -- close current tab
 keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
