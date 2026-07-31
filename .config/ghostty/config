@@ -1,0 +1,24 @@
+# Theme & colors
+theme = catppuccin-frappe.conf
+font-family = "MesloLGS NF"
+font-size = 14
+
+# Icons
+macos-icon = custom
+macos-custom-icon = ~/.config/ghostty/catppuccin-frappe.icns
+macos-titlebar-style = hidden
+
+# Cursor
+cursor-style = block
+cursor-style-blink = false
+
+# Window & Aesthetics
+window-padding-x = 10
+window-padding-y = 10
+window-padding-balance = true
+# macos-titlebar-style = transparent
+
+# Behavior
+mouse-hide-while-typing = true
+window-save-state = always
+copy-on-select = clipboard
