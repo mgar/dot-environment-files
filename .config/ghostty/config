@@ -2,6 +2,8 @@
 theme = catppuccin-frappe.conf
 font-family = "MesloLGS NF"
 font-size = 14
+font-thicken = true
+font-thicken-strength = 128
 
 # Icons
 macos-icon = custom
